@@ -66,7 +66,7 @@ K4: air at $T = 50\,^\circ\mathrm{C}$ = $223.15$
 
 $T_{room} = ?\,^\circ\mathrm{C}$ = $?K$
 
-We analyzed the properties of the gas in tube K?:
+We analyzed the properties of the gas in tube K?
 
 # Tasks
 
@@ -83,7 +83,7 @@ $\nu _k = [? \pm ?, ...]$
 ## The best linear fit 
 
 In order to find the speed of sound in the gas, we want to use the equation $\nu _n = an + b$. However, we do not know which resonance ferquency we are
-measuring, so we do not know which n belongs to which measured $\nu _n$. This is why we why we set the reference of the measured $\nu _n$ to the first one measured. Therefore we get:
+measuring, so we do not know which n belongs to which measured $\nu _n$. This is why we set the reference of the measured $\nu _n$ to the first one measured. Therefore we get:
 
 $$\nu _n - \nu _{n_0} = \Delta \nu _{\Delta n} = a\Delta n + b - (a(n_0) + b) = a(n-n_0) + b - b = a\Delta n = \frac{c}{2L} \Delta n$$
 
@@ -140,9 +140,9 @@ print(f"speed of sound = {u.nominal_values(v_sound)[0]:.2f} +- {u.std_devs(v_sou
 
 ## Degrees of freedom
 
-For an ideal gas, the velocity of sound should be given by $$c(T) = \sqrt{\frac{(f+2)RT}{fM_{mol}}}$$ where f are the degrees of freedom, R is the gas constant,
-T the temperature of the gas and M the molar mass. This equation can be soved for f: $$f = \frac{2RT}{c^2M_{mol} + RT}$$
-We calculate for f:
+For an ideal gas, the velocity of sound is given by $$c(T) = \sqrt{\frac{(f+2)RT}{fM_{mol}}}$$ where $f$ are the degrees of freedom, $R$ is the gas constant,
+$T$ the temperature of the gas and $M_mol$ the molar mass. This equation can be soved for $f$: $$f = \frac{2RT}{c^2M_{mol} + RT}$$
+We calculate for $f$:
 
 ```{python,echo = FALSE, comment = NA}
 R = 8.314462618
@@ -160,3 +160,20 @@ In theory, the gas should have ? degrees of freedom. These constist of ...
 
 ...
 
+## Phase diagram
+
+...
+
+## $C_V$, $Z$ and degrees of freedom of a simulated lennard jones gas
+
+...
+
+## Different temperatures at fixed gas density 
+
+...
+
+## Temperatures above the critical point
+
+...
+
+## Determinantion of $C_V$
