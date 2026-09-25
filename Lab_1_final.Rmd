@@ -1,0 +1,605 @@
+---
+title: "Laboratory session 1"
+author: "Benedikt Schneider, Carolina Dobras"
+date: "\\today"
+
+header-includes:
+  - \usepackage{csquotes}
+  - \usepackage{titling}
+  - \setlength{\droptitle}{-3cm}
+output:
+  pdf_document:
+    
+    highlight: tango
+    keep_tex: no
+    latex_engine: xelatex
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+  html_document:
+    
+    theme: default
+    df_print: paged
+    toc: no
+    toc_depth: '2'
+    number_sections: yes
+    highlight: tango
+    toc_float: yes
+    code_folding: hide
+link_citation: yes
+mainfont: XCharter
+lang: de-DE
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(Rcpp)
+library(reticulate)
+use_python("/usr/bin/python3")
+knitr::opts_chunk$set(fig.align='center',
+                      fig.width=6.0,
+                      fig.height=3.6)
+```
+```{r, include = FALSE}
+Sys.setenv("PKG_CXXFLAGS"="-std=c++17")
+library(Rcpp)
+```
+
+# Laboratory session 1 
+
+The first experiment is using standing waves inside a long tube in order to measure the speed of sound inside the gas the tube is filled with. The tube and 
+experiment settings are specified by the following data: 
+
+Tube length: $L = (1244 \pm 1.5)mm$. 
+
+input signal: $V_0 = 35mV$
+
+Tubes: 
+
+K1: argon or $CO_2$ at $T = T_{room}$
+
+K2: air at $T = T_{room}$
+
+K3: air at $T = 70\,^\circ\mathrm{C}$ = $343.15$K
+
+K4: air at $T = 50\,^\circ\mathrm{C}$ = $323.15$K
+
+$T_{room} = 21\,^\circ\mathrm{C}$ = $294.15$K
+
+We analyzed the properties of the gas in tube K4. The resistance of the tube is measured to be $R = (34.55 \pm 0.01) k\Omega$.
+
+# Tasks
+
+## Measurement of $\nu _k$
+
+We measured the following resonance frequencies $\nu _k$ between $200 Hz$ and $2 kHz$:
+
+K4: $\nu _k = [313 \pm 1, 450 \pm 1, 594 \pm 1, 740 \pm 1, 886 \pm 1, 1033 \pm 1, 1178 \pm 1, 1326 \pm 1, 1473 \pm 1, 1620 \pm 1, 1767 \pm 1, 1913 \pm 1]$
+
+K3: $\nu _k = [301 \pm 1, 459 \pm 1, 607 \pm 1, 757 \pm 1, 907 \pm 1, 1057 \pm 1, 1208 \pm 1, 1359 \pm 1, 1510 \pm 1, 1661 \pm 1, 1813 \pm 1, 1963 \pm 1]$
+
+The other groups measured:
+
+K2: $\nu _k = [286 \pm 1, 419 \pm 1, 470 \pm 1, 563 \pm 1, 700 \pm 1, 840 \pm 1,979 \pm 1,1117 \pm 1,1258 \pm 1,1397 \pm 1,1537 \pm 1,1677 \pm 1,1816 \pm 1,1955 \pm 1]$
+
+K1: argon: $\nu _k = [265 \pm 1, 393 \pm 1, 521 \pm 1, 650 \pm 1, 778\pm 1, 905 \pm 1, 1035 \pm 1, 1164 \pm 1, 1293\pm 1, 1423 \pm 1, 1551 \pm 1, 1680 \pm 1, 1810 \pm 1, 1938\pm 1]$
+
+$CO_2$: $\nu _k = [225 \pm 1, 440 \pm 1, 544 \pm 1, 656 \pm 1, 764\pm 1, 872 \pm 1, 979 \pm 1, 1091\pm 1, 1199 \pm 1, 1209 \pm 1, 1418 \pm 1, 1527 \pm 1, 1635 \pm 1, 1745 \pm 1, 1854\pm 1, 1963\pm 1]$
+
+## Estimated error 
+
+We estimated our error to be around $1Hz$.
+
+## The best linear fit 
+
+In order to find the speed of sound in the gas, we want to use the equation $\nu _n = an + b$. However, we do not know which resonance ferquency we are
+measuring, so we do not know which n belongs to which measured $\nu _n$. This is why we set the reference of the measured $\nu _n$ to the first one measured. Therefore we get:
+
+$$\nu _n - \nu _{n_0} = \Delta \nu _{\Delta n} = a\Delta n + b - (a(n_0) + b) = a(n-n_0) + b - b = a\Delta n = \frac{c}{2L} \Delta n$$
+
+So the central relation is: $$\Delta \nu _{\Delta n} = \frac{c}{2L} \Delta n$$ 
+
+where $\Delta n$ starts at 0 for the first measurement and for $k$ measurements continues until $k-1$ for the $k^{th}$ resonance frequency. $\Delta \nu _{\Delta n}$ against $\Delta n$ is plotted and
+evaluated in the following:
+
+K4:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([313,450,594,740,886,1033,1178,1326,1473,1620,1767,1913], [1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+L = ufloat(1.244,0.0015)  #Länge, Fehler auf Länge
+v_sound_k4 = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound_k4)[0]:.2f} +- {u.std_devs(v_sound_k4)[0]:.2f} m/s")
+
+```
+K3:
+
+The resistance of the tube is measured to be $R = (15.66 \pm 0.02) k\Omega$
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([301, 459, 607, 757, 907, 1057, 1208, 1359, 1510, 1661, 1813 , 1963], [1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+v_sound_k3 = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound_k3)[0]:.2f} +- {u.std_devs(v_sound_k3)[0]:.2f} m/s")
+
+```
+K2:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([286, 419, 563 , 700, 840 ,979 ,1117 ,1258 ,1397 ,1537 ,1677 ,1816 ,1955], [1,1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+v_sound_k2 = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound_k2)[0]:.2f} +- {u.std_devs(v_sound_k2)[0]:.2f} m/s")
+
+```
+K1, argon:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([265 ,393 ,521 ,650 ,778, 905 ,1035 ,1164 ,1293, 1423 ,1551 ,1680 ,1810 ,1938], [1,1,1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+v_sound_k1_argon = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound_k1_argon)[0]:.2f} +- {u.std_devs(v_sound_k1_argon)[0]:.2f} m/s")
+
+```
+K1, $CO_2$:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([225,440,544,656,764,872,979,1091,1199,1209,1418,1527,1635,1745,1854,1963], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+v_sound_k1_co2 = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound_k1_co2)[0]:.2f} +- {u.std_devs(v_sound_k1_co2)[0]:.2f} m/s")
+
+```
+## Most important contribution to uncertainty
+
+The most important contribution to the error is the inaccuracy in finetuning the resonance frequency. We estimated our accuracy in doing so to $1Hz$.
+
+The uncertainty shrinks the more points are included in the fit. In the following we see the plot for K4, once with 12 points and once with 6:
+
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([313,450,594,740,886,1033,1178,1326,1473,1620,1767,1913], [1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.title("K4, 12 points")
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([313,594,886,1178,1473,1767], [1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))*2
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.title("K4, 6 points")
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+As we can see, the uncertainty on the slope is more than 50% greater if we only choose half of the points.
+
+## Degrees of freedom
+
+For an ideal gas, the velocity of sound is given by $$c(T) = \sqrt{\frac{(f+2)RT}{fM_{mol}}}$$ where $f$ are the degrees of freedom, $R$ is the gas constant,
+$T$ the temperature of the gas and $M_{mol}$ the molar mass. This equation can be soved for $f$: $$f = \frac{2RT}{c^2M_{mol} - RT}$$
+We calculate for $f$:
+
+K4:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(343.15,1) #Temperature + error in [K]
+c = v_sound_k4
+M_mol = 0.02896 #[molare masse] [kg/mol]
+
+f = 2*R*T/(c**2*M_mol - R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K3:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(323.15,1) #Temperature + error in [K]
+c = v_sound_k3
+M_mol = 0.02896 #[molare masse] [kg/mol]
+
+f = 2*R*T/(c**2*M_mol - R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K2:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(294.15,1) #Temperature + error in [K]
+c = v_sound_k2
+M_mol = 0.02896 #[molare masse] [kg/mol]
+
+f = 2*R*T/(c**2*M_mol - R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K1, argon:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(294.15,1) #Temperature + error in [K]
+c = v_sound_k1_argon
+M_mol = 0.04 #[molare masse] [kg/mol]
+
+f = 2*R*T/(c**2*M_mol - R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K1, co2:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(294.15,1) #Temperature + error in [K]
+c = v_sound_k1_co2
+M_mol = 0.044 #[molare masse] [kg/mol]
+
+f = 2*R*T/(c**2*M_mol - R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+
+In theory, the air inside K2, K3, K4 should have 5 degrees of freedom. These constist of 3 for translation and 2 for rotation. 
+CO2 can also be described as a 2-atom molecule because it is linear, therefore it should also have 5 degrees of freedom. 
+Argon is a one-atom gas and only has 3 translational degrees of freedom.
+
+However, our measurement for the degrees of freedom does not fit the theoretical expectation. This might be because the measurement of the speed of sound we used to calculate this is not very accurate. We fixed the measurement for K2 a bit by not using one value that was obviously off and improving the linear regression.
+...
+
+# Simulation
+
+## Phase diagram
+We change the parameters in the simualation and observe how the simulation changes.Therefore, we double the inicial values and plot the simulation's output.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/norm_new.png}
+\caption{simulation}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/N_one_fifth.png}
+\caption{simulation with doubled number of particles}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/rho_double.png}
+\caption{simulation with doubled density}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/T_double.png}
+\caption{simulation with doubled starting temperature}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/e_flux_double.png}
+\caption{simulation with doubled energy flux}
+\end{figure}
+
+As seen in the plots, the pressure is proportional to the starting temperature, which makes sense considering the ideal gas law. Furthermore, the compressibility factor $Z$ is is between 0.7 and 1.1 which is quite close to one. This means that we can assume our gas to be rather ideal.
+
+The density $\rho*=0.1$ migth have been a bit to high and therefore the lennard jones gas does not act completely as an ideal gas.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/phase_diagram.jpeg}
+\caption{Lennard Jones phase diagram: the marked area is the area where our simulations take place}
+\end{figure}
+
+...
+
+## $C_V$, $Z$ and degrees of freedom of a simulated lennard jones gas
+We used a lennard jones gas with the following properties:
+energy flux 5, particle number $N=5000$, temperature $T*=1.4$, density $\rho*=0.1$, pressure $p=0.01$ and a timestep of $t=0.005s$
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/Z_C_V.png}
+\caption{$Z$ and $C_V$}
+\label{Z}
+\end{figure}
+
+$C_V= \frac{dE\cdot t}{\Delta T}$ \quad \quad $Z = \frac{pV}{NT}$
+
+For an ideal gas the compressibility factor $Z$ is equal to 1. There is no Boltzman constant because we use reduced Lennard-Jones units. As seen in our simulation \ref{Z} $Z=0.83\pm0.03$. This means our gas can be described as an ideal gas as $Z$ is close to 1.
+
+degrees of freedom
+$f = \frac{2c_V}{R} = 3.03 \pm 202.98$
+
+We expect the gas to have 3 degrees of freedom because its a one-atom gas and then we only have the translational degrees of freedom. This fits well to the measurement. The uncertainty is huge due to numerical fluctuations in our simulation as can be seen in the plot.
+...
+
+## Different temperatures at fixed gas density 
+triple point temperature: $T*_{t}= 0.69$
+
+critical temperature: $T*_{c}= 1.32$
+
+fixed density: $\rho = 0.01$
+
+We chose the following temperatures between the triple point temperature and ten times the critical temperature:
+$T={T*_t, 3T*_c, 7T*_c, 10t*_c} \in [0.69, 13.2]$
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/T_triple_point_rho_one_tenth.png}
+\caption{$Z$ and $C_V$ for $T*_t$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/three_times_T_critical_rho_one_tenth.png}
+\caption{$Z$ and $C_V$ for $3T*_c$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/seven_times_T_critical_rho_one_tenth.png}
+\caption{$Z$ and $C_V$ for $7T*_c$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/ten_times_T_critical_rho_one_tenth.png}
+\caption{$Z$ and $C_V$ for $10T*_c$}
+\end{figure}
+
+$C_V$ and $Z$ do not change with temperature. For the triple point there was too much fluctuation in our simulated data which is why the median is higher than the heat capacity in the simulations with higher temperatures.
+...
+
+
+
+## Temperatures above the critical point
+For a temperature $T*=2T_c > T_c$ we used the follwing densities:
+$\rho= {\frac{1}{3}\rho_t, \frac{2}{3}\rho_t, \rho_t}$
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/two_times_T_crit_N_one_tenth_rho_one_third_rho_triple.png}
+\caption{$Z$ and $C_V$ for $\frac{1}{3}\rho_t$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/two_times_T_crit_N_one_tenth_rho_two_thirds_rho_triple.png}
+\caption{$Z$ and $C_V$ for $\frac{2}{3}\rho_t$}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/two_times_T_crit_N_one_tenth_rho_triple.png}
+\caption{$Z$ and $C_V$ for $\rho_t$}
+\end{figure}
+
+For the different densities $C_V$ and $Z$ do not change.
+...
+
+## Determinantion of $C_V$
+The N2 models have 2.56 (rigid) and 3.54 (with vibration) degrees of freedom according to the simulation.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/rigid_bond.png}
+\caption{degrees of freedom for N2 with rigid bond}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/vibration_bond.png}
+\caption{degrees of freedom for N2 with vibration}
+\end{figure}
+
+The number of degrees of freedom derived from sound velocity measurements in the lab is $f_{lab}={5.81\pm0.09,3.89\pm0.05,4.71\pm0.07}$ for air. Since air is made out of 78% N2 this can be compared to the rigid N2 which we expect to have 5 degrees of freedom.
+
+We expected $f$ for rigid N2 to be 5 (3 translation and 2 rotation) and for N2 with vibrations to be 7 because for the additional degrees of freedom for vibration. This does not fit to our simulations. A reason for this could be that the temperature in our simulation is too low to have the vibrational degrees of freedom.
