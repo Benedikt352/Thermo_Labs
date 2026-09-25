@@ -48,7 +48,7 @@ library(Rcpp)
 # Laboratory session 1 
 
 The first experiment is using standing waves inside a long tube in order to measure the speed of sound inside the gas the tube is filled with. The tube and 
-experiment setings are specified by the following data: 
+experiment settings are specified by the following data: 
 
 Tube length: $L = ? \pm (1.5mm?)$. 
 
@@ -74,7 +74,15 @@ We analyzed the properties of the gas in tube K?
 
 We measured the following resonance frequencies $\nu _k$ between $200 Hz$ and $2 kHz$:
 
-$\nu _k = [? \pm ?, ...]$
+K?: $\nu _k = [? \pm ?, ...]$
+
+The other groups meaured:
+
+K?: $\nu _k = [? \pm ?, ...]$
+
+K?: $\nu _k = [? \pm ?, ...]$
+
+K?: $\nu _k = [? \pm ?, ...]$
 
 ## How we estimated the error 
 
@@ -91,6 +99,140 @@ So the central relation is: $$\Delta \nu _{\Delta n} = \frac{c}{2L} \Delta n$$
 
 where $\Delta n$ starts at 0 for the first measurement and for $k$ measurements continues until $k-1$ for the $k^{th}$ resonance frequency. $\Delta \nu _{\Delta n}$ against $\Delta n$ is plotted and
 evaluated in the following:
+
+K?:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([1.1,2,3.1], [0.01,0.1,0.1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+L = ufloat(1,0.1)  #Länge, Fehler auf Länge
+v_sound = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound)[0]:.2f} +- {u.std_devs(v_sound)[0]:.2f} m/s")
+
+```
+K?:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([1.1,2,3.1], [0.01,0.1,0.1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+L = ufloat(1,0.1)  #Länge, Fehler auf Länge
+v_sound = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound)[0]:.2f} +- {u.std_devs(v_sound)[0]:.2f} m/s")
+
+```
+K?:
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([1.1,2,3.1], [0.01,0.1,0.1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+Given the slope of the fit curve, the velocity of sound can be calculated:
+
+```{python, echo = FALSE, comment = NA}
+L = ufloat(1,0.1)  #Länge, Fehler auf Länge
+v_sound = 2*L*a
+print(f"speed of sound = {u.nominal_values(v_sound)[0]:.2f} +- {u.std_devs(v_sound)[0]:.2f} m/s")
+
+```
+K?:
 
 ```{python, echo = FALSE}
 from uncertainties import unumpy as u, covariance_matrix as co, ufloat
@@ -144,6 +286,41 @@ For an ideal gas, the velocity of sound is given by $$c(T) = \sqrt{\frac{(f+2)RT
 $T$ the temperature of the gas and $M_mol$ the molar mass. This equation can be soved for $f$: $$f = \frac{2RT}{c^2M_{mol} + RT}$$
 We calculate for $f$:
 
+K?:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(300,1) #Temperature + error in [K]
+c = v_sound
+M_mol = 20 #[molare masse]
+
+f = 2*R*T/(c**2*M_mol + R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K?:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(300,1) #Temperature + error in [K]
+c = v_sound
+M_mol = 20 #[molare masse]
+
+f = 2*R*T/(c**2*M_mol + R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K?:
+
+```{python,echo = FALSE, comment = NA}
+R = 8.314462618
+T = ufloat(300,1) #Temperature + error in [K]
+c = v_sound
+M_mol = 20 #[molare masse]
+
+f = 2*R*T/(c**2*M_mol + R*T)
+print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
+```
+K?:
+
 ```{python,echo = FALSE, comment = NA}
 R = 8.314462618
 T = ufloat(300,1) #Temperature + error in [K]
@@ -154,7 +331,7 @@ f = 2*R*T/(c**2*M_mol + R*T)
 print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
 ```
 
-In theory, the gas should have ? degrees of freedom. These constist of ...
+In theory, the gases inside K?,... should have ? degrees of freedom. These constist of ...
 
 ## Comparison to simulation and theory
 
