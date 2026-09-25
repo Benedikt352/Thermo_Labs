@@ -88,7 +88,7 @@ $CO_2$: $\nu _k = [225 \pm 1, 440 \pm 1, 544 \pm 1, 656 \pm 1, 764\pm 1, 872 \pm
 
 ## Estimated error 
 
-We estimated our error to be around $1Hz$
+We estimated our error to be around $1Hz$.
 
 ## The best linear fit 
 
@@ -462,28 +462,94 @@ f = 2*R*T/(c**2*M_mol - R*T)
 print(f"The calculated amount of degrees of freedom from the experiment is {u.nominal_values(f)[0]:.2f} +- {u.std_devs(f)[0]:.2f}")
 ```
 
-In theory, the gases inside K?,... should have ? degrees of freedom. These constist of ...
-
+In theory, the air inside K2, K3, K4 should have 5 degrees of freedom. These constist of 3 for translation and 2 for rotation. 
+CO2 can also be described as a 2-atom molecule because it is linear, therefore it should also have 5 degrees of freedom. 
+Argon is a one-atom gas and only has 3 translational degrees of freedom.
 ## Comparison to simulation and theory
 
 ...
 
+# Simulation
+
 ## Phase diagram
+We change the parameters in the simualation and observe how the simulation changes.Therefore, we double the inicial values and plot the simulation's output.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/norm_new.png}
+\caption{simulation}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/N_one_fifth.png}
+\caption{simulation with doubled number of particles}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/rho_double.png}
+\caption{simulation with doubled density}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/T_double.png}
+\caption{simulation with doubled starting temperature}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/e_flux_double.png}
+\caption{simulation with doubled energy flux}
+\end{figure}
+
+As seen in the plots above, the output still is linear and the starting temperature blabla.
+The density $\rho*=0.1$ migth have been a bit to high and therefore the lennard jones gas does not act as an ideal gas.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/phase_diagram.jpeg}
+\caption{Lennard Jones phase diagram: the marked area is the area where our simulations take place}
+\end{figure}
 
 ...
 
 ## $C_V$, $Z$ and degrees of freedom of a simulated lennard jones gas
+We used a lennard jones gas with the following properties:
+energy flux 5, particle number $N=5000$, temperature $T*=1.4$, density $\rho*=0.1$, pressure $p=0.01$ and a timestep of $t=0.005s$
 
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/Z_C_V.png}
+\caption{$Z$ and $C_V$}
+\end{figure}
+
+$C_V= \frac{dE\cdot t}{\Delta T}$
+
+$Z = \frac{pV}{NT}$
+For an ideal gas the compressibility factor $Z$ is equal to 1. There is no Boltzman constant because we use redused Lennard-Jones units. As seen in our simulation (hier verlinken oder so) $Z=?$. This means our gas can be described as an ideal gas as $Z$ is close to 1.
+
+degrees of freedom
+$f = \frac{2c_V}{R}$
+
+We expect the gas to have 3 degrees of freedom because its a one-atom gas and then we only have the translational degrees of freedom. This fits well to the measurement.
 ...
 
 ## Different temperatures at fixed gas density 
+triple point temperature: $T*_{t}= 0.69$
+critical temperature: $T*_{c}= 1.32$
 
+We chose the following temperatures between the triple point temperature and ten times the critical temperature:
+$T \in [0.69, 13.2]$
+
+$C_V$ and $Z$ change/do not change with temperature.
 ...
 
 ## Temperatures above the critical point
+For a temperature $T*=$ we used the follwing densities:
+$\rho= {hier Dichten rein}$
 
+$C_V$ and $Z$ change/do not change with densiity
 ...
 
 ## Determinantion of $C_V$
+The N2 models have ? degrees of freedom according to the simulation.
 
+The number of degrees of freedom derived from sound velocity measurements in the lab is $f_{lab}=?$
+
+We expected $f$ for rigid N2 to be 5? and for N2 with vibrations to be 7?
 ...
