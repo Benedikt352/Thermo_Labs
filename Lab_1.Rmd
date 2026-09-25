@@ -199,7 +199,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
-nu = u.uarray([286, 419, 470, 563 , 700, 840 ,979 ,1117 ,1258 ,1397 ,1537 ,1677 ,1816 ,1955], [1,1,1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+nu = u.uarray([286, 419, 563 , 700, 840 ,979 ,1117 ,1258 ,1397 ,1537 ,1677 ,1816 ,1955], [1,1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
 d_n = np.arange(len(nu))
 dnu = u.uarray([],[])
 
@@ -324,7 +324,81 @@ print(f"speed of sound = {u.nominal_values(v_sound_k1_co2)[0]:.2f} +- {u.std_dev
 
 The most important contribution to the error is the inaccuracy in finetuning the resonance frequency. We estimated our accuracy in doing so to $1Hz$.
 
-The uncertainty shrinks the more points are included in the fit. In the following we see the plot for K4, once with 12 points and once
+The uncertainty shrinks the more points are included in the fit. In the following we see the plot for K4, once with 12 points and once with 6:
+
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([313,450,594,740,886,1033,1178,1326,1473,1620,1767,1913], [1,1,1,1,1,1,1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.title("K4, 12 points")
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+
+```{python, echo = FALSE}
+from uncertainties import unumpy as u, covariance_matrix as co, ufloat
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+nu = u.uarray([313,594,886,1178,1473,1767], [1,1,1,1,1,1]) #[Messwerte], [sigmas] !
+d_n = np.arange(len(nu))*2
+dnu = u.uarray([],[])
+
+for i in range(len(nu)):
+    l = nu[i] - nu[0]
+    dnu = np.append(dnu, l)
+
+dnu[0] = ufloat(u.nominal_values(dnu)[0],np.mean(u.std_devs(dnu))) #set std dev of the first difference to the mean std dev because otherwise it would be 0
+
+def lin(x, a, b):
+    return a*x +b
+
+popt, pcov = curve_fit(lin, d_n, u.nominal_values(dnu), sigma = co(dnu), absolute_sigma = True) 
+
+a = u.uarray([popt[0]], [np.sqrt(pcov[0,0])])
+b = popt[1]
+
+plt.figure()
+plt.errorbar(d_n,  u.nominal_values(dnu), yerr = u.std_devs(dnu), ecolor = "darkred", capsize = 5, label = "Datapoints", color = "darkblue", fmt = "o")
+plt.plot(d_n, u.nominal_values(a)*d_n + b, label = f"Fitted curve, slope = {u.nominal_values(a)[0]:.2f} +- {u.std_devs(a)[0]:.2f}", color = "darkgreen")
+plt.grid()
+plt.legend()
+plt.title("K4, 6 points")
+plt.xlabel(r"$\Delta n$")
+plt.ylabel(r"$\Delta \nu _{\Delta n} [Hz]$")
+plt.show()
+```
+
+As we can see, the uncertainty on the slope is more than 50% greater if we only choose half of the points.
 
 ## Degrees of freedom
 
